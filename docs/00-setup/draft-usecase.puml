@@ -1,0 +1,47 @@
+@startuml
+!include _style.puml
+left to right direction
+title Умный дом — черновик диаграммы ВИ
+
+' --- Актёры-люди (обобщение) ---
+actor "Жилец" as resident
+actor "Взрослый" as adult
+actor "Ребёнок" as child
+
+adult --|> resident
+child --|> resident
+
+' --- Внешние системы ---
+actor "Телеграм-бот" as tg <<system>>
+actor "Полиция" as police <<system>>
+
+' --- Техник — отдельный актёр, не жилец ---
+actor "Техник" as tech
+
+' --- Граница системы ---
+rectangle "Умный дом" {
+
+  usecase "Управлять устройством" as UC_device
+  usecase "Настроить сценарий" as UC_scenario
+  usecase "Включить режим «никого нет»" as UC_away
+  usecase "Получить уведомление" as UC_notify
+  usecase "Запросить повышение привилегий" as UC_escalate
+  usecase "Обновить ПО устройства" as UC_update
+}
+
+' --- Связи актёров с ВИ ---
+adult -- UC_device
+adult -- UC_scenario
+adult -- UC_away
+child -- UC_device
+child -- UC_escalate
+
+tg -- UC_notify
+police -- UC_notify
+
+tech -- UC_update
+
+' --- include: базовый ВИ зависит от включаемого ---
+UC_away ..> UC_notify : <<include>>
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+!include ../../_style.puml
+left to right direction
+title Умный дом — диаграмма вариантов использования
+
+' --- Актёры-люди с обобщением ---
+actor "Жилец" as resident
+actor "Взрослый" as adult
+actor "Ребёнок" as child
+adult --|> resident
+child --|> resident
+
+' --- Техник, отдельный актёр ---
+actor "Техник" as tech
+
+' --- Внешние системы ---
+actor "Телеграм-бот" as tg <<system>>
+actor "Полиция" as police <<system>>
+
+rectangle "Умный дом" {
+  usecase "Управлять устройством" as UC_device
+  usecase "Проверить права доступа" as UC_access
+  usecase "Настроить сценарий" as UC_scenario
+  usecase "Активировать режим «никого нет»" as UC_away
+  usecase "Получать уведомления" as UC_notify
+  usecase "Получить уведомление об аварии" as UC_alert
+  usecase "Передать сигнал в полицию" as UC_police
+  usecase "Запросить повышение привилегий" as UC_escalate
+  usecase "Просмотреть историю событий" as UC_history
+  usecase "Обновить ПО устройства" as UC_update
+  usecase "Диагностировать устройство" as UC_diag
+}
+
+' --- Связи актёров с ВИ ---
+resident -- UC_device
+resident -- UC_notify
+resident -- UC_history
+adult -- UC_scenario
+adult -- UC_away
+child -- UC_escalate
+
+tech -- UC_update
+tech -- UC_diag
+
+tg -- UC_notify
+police -- UC_police
+
+' --- include: базовый ВИ неполон без включаемого ---
+UC_device ..> UC_access : <<include>>
+
+' --- extend: расширяющий ВИ дополняет базовый условно ---
+UC_escalate ..> UC_device : <<extend>>\n[недостаточно прав]
+UC_alert ..> UC_notify : <<extend>>\n[сработал аварийный датчик]
+
+@enduml
