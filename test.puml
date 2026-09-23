@@ -1,0 +1,12 @@
+@startuml
+!include _style.puml
+package "Каталог" {
+class Книга
+class Автор
+}
+package "Выдачи" {
+class Выдача
+}
+Книга-- Автор
+Выдачи ..> Каталог : <<use>>
+@enduml

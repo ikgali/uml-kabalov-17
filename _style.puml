@@ -1,0 +1,6 @@
+' _style.puml
+skinparam backgroundColor #FFFFFF
+skinparam class {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+}
