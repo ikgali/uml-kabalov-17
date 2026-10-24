@@ -1,0 +1,79 @@
+﻿@startuml
+!include ../../_style.puml
+title ВИ-01 «Управлять устройством»: исключения
+skinparam sequenceGroupFontSize 10
+skinparam sequenceGroupHeaderFontSize 10
+
+actor "Жилец" as user
+participant "Телеграм-бот" as tg <<внешняя система>>
+participant "Контроллер" as ctrl
+participant "ПолитикаДоступа" as policy
+participant "Устройство" as dev
+participant "Журнал" as journal
+
+user -> tg : команда(...)
+activate tg
+tg -> ctrl : принятьКоманду(текст)
+activate ctrl
+ctrl -> ctrl : распознатьКоманду(текст)
+
+alt [не\nраспознана]
+  ctrl ->> journal : КомандаНеРаспознана
+  ctrl --> tg : запрос уточнения
+else [нет\nправ]
+  ctrl -> policy : разрешить(жилец, команда)
+  activate policy
+  policy --> ctrl : запрещено
+  deactivate policy
+  ctrl ->> journal : ДоступЗапрещён
+  ctrl --> tg : отказ: нет прав
+else [offline]
+  ctrl -> policy : разрешить(жилец, команда)
+  activate policy
+  policy --> ctrl : разрешено
+  deactivate policy
+  ctrl -> dev : проверитьДоступность()
+  activate dev
+  dev --> ctrl : offline
+  deactivate dev
+  ctrl ->> journal : УстройствоНедоступно
+  ctrl --> tg : отказ: устройство offline
+else [успех]
+  ctrl -> policy : разрешить(жилец, команда)
+  activate policy
+  policy --> ctrl : разрешено
+  deactivate policy
+  ctrl -> dev : проверитьДоступность()
+  activate dev
+  dev --> ctrl : online
+  deactivate dev
+  loop до 3 попыток
+    ctrl -> dev : выполнитьКоманду(команда)
+    activate dev
+    dev --> ctrl : подтверждение
+    deactivate dev
+  end
+  ctrl ->> journal : КомандаВыполнена
+  ctrl --> tg : команда выполнена
+end
+
+deactivate ctrl
+tg --> user : результат
+deactivate tg
+
+note over journal
+  Асинхронная запись: контроллер
+  не ждёт подтверждения от журнала.
+end note
+
+note over user
+  И-3 «канал недоступен»: при недоступном Телеграме
+  команда принимается через Джарвис; если недоступны
+  оба канала — взаимодействие завершается без изменений.
+end note
+
+note over ctrl
+  При отказе в правах жилец может
+  запросить эскалацию (ВИ-08).
+end note
+@enduml

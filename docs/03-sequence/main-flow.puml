@@ -1,0 +1,46 @@
+﻿@startuml
+!include ../../_style.puml
+title ВИ-01 «Управлять устройством»: основной сценарий
+
+actor "Жилец" as user
+participant "Телеграм-бот" as tg <<внешняя система>>
+participant "Контроллер" as ctrl
+participant "ПолитикаДоступа" as policy
+participant "Устройство" as dev
+participant "Журнал" as journal
+
+user -> tg : команда(«включить свет в гостиной»)
+activate tg
+tg -> ctrl : принятьКоманду(текст)
+activate ctrl
+ctrl -> ctrl : распознатьКоманду(текст)
+ctrl -> policy : разрешить(жилец, команда)
+activate policy
+policy --> ctrl : разрешено
+deactivate policy
+
+ctrl -> dev : проверитьДоступность()
+activate dev
+dev --> ctrl : online
+
+opt команда управляет замком
+  ctrl --> tg : запросПодтверждения()
+  tg --> user : подтвердить открытие?
+  user -> tg : подтверждаю
+  tg -> ctrl : подтверждение
+end
+
+ctrl -> dev : выполнитьКоманду(команда)
+dev --> ctrl : подтверждение
+deactivate dev
+
+ctrl -> journal : записать(событие)
+activate journal
+journal --> ctrl : ok
+deactivate journal
+
+ctrl --> tg : команда выполнена
+deactivate ctrl
+tg --> user : статус выполнения
+deactivate tg
+@enduml

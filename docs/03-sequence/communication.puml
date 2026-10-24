@@ -1,0 +1,34 @@
+﻿@startuml
+!include ../../_style.puml
+title Диаграмма коммуникации: ВИ-01 «Управлять устройством»
+skinparam defaultFontSize 16
+skinparam maxMessageSize 120
+skinparam nodesep 50
+skinparam ranksep 60
+
+object "<u>:Жилец</u>" as user
+object "<u>tg : Телеграм-бот</u>" as tg
+object "<u>ctrl : Контроллер</u>" as ctrl
+object "<u>policy : ПолитикаДоступа</u>" as policy
+object "<u>dev : Устройство</u>" as dev
+object "<u>journal : Журнал</u>" as journal
+
+user -- tg : 1: команда() >
+tg -- ctrl : 2: принять() >
+ctrl -- ctrl : 2.1: распознать() >
+ctrl -- policy : 2.2: разрешить() >
+policy -- ctrl : 2.3: да <
+ctrl -- dev : 2.4: проверить() >
+dev -- ctrl : 2.5: online <
+ctrl -- dev : 2.6: выполнить() >
+dev -- ctrl : 2.7: подтверждение <
+ctrl -- journal : 2.8: записать() >
+journal -- ctrl : 2.9: ok <
+ctrl -- tg : 3: выполнено <
+tg -- user : 4: статус <
+
+note bottom of ctrl
+  2.2–2.3 — проверка прав;
+  2.6–2.7 — команда устройству.
+end note
+@enduml
