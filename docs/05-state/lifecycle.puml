@@ -1,0 +1,65 @@
+﻿@startuml
+!include ../../_style.puml
+title Жизненный цикл сценария «Никого нет»
+top to bottom direction
+hide empty description
+
+state "Черновик" as Draft
+state "НаПроверке" as Checking
+state "ГотовКАктивации" as Ready
+state "Активируется" as Activating
+state "Активен" as Active
+state "Приостановлен" as Paused
+state "Сработал" as Triggered {
+  state "Выполняется" as Running
+  state "Ожидание завершения" as Waiting
+  [*] --> Running
+  Running --> Waiting : действияОтправлены()
+}
+state "Отключён" as Disabled
+state "Ошибка" as Error
+state "Архивирован" as Archived
+state "Эвакуация" as Evacuation
+
+Active : entry / включитьДатчики()
+Active : exit / выключитьДатчики()
+Triggered : entry / зафиксировать()
+Triggered : exit / завершить()
+Error : entry / уведомить()
+Evacuation : entry / открытьДвери()
+Evacuation : exit / зафиксировать()
+
+[*] --> Draft
+
+Draft --> Checking : сохранить()
+Checking --> Draft : [есть ошибки] / показать()
+Checking --> Ready : [проверка пройдена]
+Ready --> Activating : активировать()
+Activating --> Active : [устройства доступны] / применить()
+Activating --> Error : [offline] / сбой()
+
+Active --> Paused : пауза()
+Paused --> Active : возобновить()
+Active --> Triggered : when(датчик)
+Triggered --> Active : after(5 мин)
+Active --> Disabled : деактивировать()
+Disabled --> Archived : архивировать()
+
+Error --> Archived : архивировать() [решено]
+Error --> [*] : [отказ]
+
+Active --> Evacuation : when(пожар) [опасность] / эвакуация()
+Error --> Evacuation : when(пожар) [опасность] / эвакуация()
+
+Evacuation --> Archived : эвакуацияЗавершена()
+Evacuation --> Error : [двери не открылись] / авария()
+
+Archived --> [*]
+
+note right of Evacuation
+  Правило безопасности:
+  опасные состояния (пожар)
+  ведут к открыванию дверей
+  для эвакуации людей.
+end note
+@enduml
