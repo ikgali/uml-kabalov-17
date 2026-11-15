@@ -1,20 +1,20 @@
 @startuml
-!include _style.puml
+!include ../../_style.puml
 title Умный дом — черновик диаграммы последовательности
 
 actor "Жилец" as user
 participant "Телеграм-бот" as tg
-participant "Джарвис" as jarvis
+participant "Пятница" as friday
 participant "Контроллер" as ctrl
 database "Журнал" as log
 
 user -> tg : «Включи свет в гостиной»
-tg -> jarvis : команда: light_on, room=living
-jarvis -> ctrl : распознанная команда
+tg -> friday : команда: light_on, room=living
+friday -> ctrl : распознанная команда
 ctrl -> ctrl : проверить права
 ctrl -> log : записать событие
-ctrl --> jarvis : подтверждение
-jarvis --> tg : «Свет включён»
+ctrl --> friday : подтверждение
+friday --> tg : «Свет включён»
 tg --> user : сообщение
 
 @enduml

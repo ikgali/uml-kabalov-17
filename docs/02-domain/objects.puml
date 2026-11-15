@@ -46,6 +46,8 @@ object "<u>evt-901 : Событие</u>" as evt {
   описание = "Обнаружена протечка на кухне"
 }
 
+object "<u>journal-01 : Журнал</u>" as journal
+
 object "<u>notif-301 : Уведомление</u>" as notif {
   сформировано = 2026-10-24T11:58
   доставлено = null
@@ -63,6 +65,7 @@ ctrl -- cmd : обрабатывает >
 ctrl -- scenario : активирует >
 ctrl -- notif : формирует >
 scenario o-- light : управляет >
+journal *-- evt : содержит >
 leak -- evt : источник >
 evt -- notif : о событии >
 notif -- channel : доставляется >

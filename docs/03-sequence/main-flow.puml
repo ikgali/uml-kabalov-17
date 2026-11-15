@@ -11,9 +11,9 @@ participant "Журнал" as journal
 
 user -> tg : команда(«включить свет в гостиной»)
 activate tg
-tg -> ctrl : принятьКоманду(текст)
+tg -> ctrl : обработатьКоманду(текст)
 activate ctrl
-ctrl -> ctrl : распознатьКоманду(текст)
+ctrl -> ctrl : распознать()
 ctrl -> policy : разрешить(жилец, команда)
 activate policy
 policy --> ctrl : разрешено
@@ -34,10 +34,11 @@ ctrl -> dev : выполнитьКоманду(команда)
 dev --> ctrl : подтверждение
 deactivate dev
 
-ctrl -> journal : записать(событие)
-activate journal
-journal --> ctrl : ok
-deactivate journal
+ctrl ->> journal : записать(событие)
+note right of journal
+  Асинхронная запись: контроллер
+  публикует событие и не ждёт ответа.
+end note
 
 ctrl --> tg : команда выполнена
 deactivate ctrl
