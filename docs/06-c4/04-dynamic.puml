@@ -1,0 +1,29 @@
+@startuml
+!include <C4/C4_Dynamic>
+!pragma layout smetana
+title Динамический вид C4: ВИ-01 «Управлять устройством»
+
+Person(resident, "Жилец", "Отправляет команду «включить свет»")
+System_Ext(tg, "Телеграм-бот", "Внешний канал команд")
+Container(api, "Backend API (Контроллер)", "Kotlin, Spring Boot", "Оркестрирует команду")
+ContainerQueue(mqtt, "Брокер MQTT", "Mosquitto", "Команды устройствам")
+ContainerQueue(eventBus, "Очередь событий", "RabbitMQ", "События журнала")
+Container(journalWorker, "Обработчик журнала", "Kotlin", "Пишет журнал")
+Container(notification, "Сервис уведомлений", "Kotlin", "Доставляет статус")
+ContainerDb(db, "БД «Журнал»", "PostgreSQL", "Права и события")
+System_Ext(devices, "Устройства умного дома", "Свет, замки, климат")
+
+RelIndex(1, resident, tg, "Команда «включить свет в гостиной»")
+RelIndex(2, tg, api, "Передаёт команду по HTTPS")
+RelIndex(3, api, db, "Проверяет права и роль жильца")
+RelIndex(4, api, mqtt, "Публикует команду устройству")
+RelIndex(5, mqtt, devices, "Доставляет команду")
+RelIndex(6, devices, mqtt, "Публикует подтверждение")
+RelIndex(7, mqtt, api, "Доставляет подтверждение")
+RelIndex(8, api, eventBus, "Публикует событие CommandCompleted")
+RelIndex(9, eventBus, journalWorker, "Передаёт событие журнала")
+RelIndex(10, journalWorker, db, "Записывает событие")
+RelIndex(11, eventBus, notification, "Передаёт запрос на уведомление")
+RelIndex(12, notification, tg, "Отправляет статус")
+RelIndex(13, tg, resident, "Показывает результат")
+@enduml

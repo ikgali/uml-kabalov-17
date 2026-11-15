@@ -1,0 +1,66 @@
+name: Render diagrams
+
+on:
+  push:
+    paths:
+      - "docs/**/*.puml"
+      - "_style.puml"
+      - ".github/workflows/diagrams.yml"
+  pull_request:
+    paths:
+      - "docs/**/*.puml"
+      - "_style.puml"
+      - ".github/workflows/diagrams.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plantuml:
+    name: PlantUML check and render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: Download PlantUML
+        run: |
+          curl -sSL -o plantuml.jar \
+            https://github.com/plantuml/plantuml/releases/download/v1.2025.2/plantuml-1.2025.2.jar
+
+      - name: Check PlantUML syntax
+        run: |
+          find docs -name '*.puml' ! -name '_*.puml' -print0 \
+            | xargs -0 java -jar plantuml.jar -failfast2 -charset UTF-8 -checkonly
+
+      - name: Render PNG
+        run: |
+          mkdir -p out/png
+          find docs -name '*.puml' ! -name '_*.puml' -print0 \
+            | xargs -0 java -jar plantuml.jar -failfast2 -charset UTF-8 -tpng -o "$PWD/out/png"
+
+      - name: Render SVG
+        run: |
+          mkdir -p out/svg
+          find docs -name '*.puml' ! -name '_*.puml' -print0 \
+            | xargs -0 java -jar plantuml.jar -failfast2 -charset UTF-8 -tsvg -o "$PWD/out/svg"
+
+      - name: Upload rendered diagrams
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagrams
+          path: out/
+          if-no-files-found: error

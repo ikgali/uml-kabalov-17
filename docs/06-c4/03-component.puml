@@ -1,0 +1,53 @@
+@startuml
+!include <C4/C4_Component>
+!pragma layout smetana
+title Уровень 3 — Components: Backend API (Контроллер)
+
+Person(resident, "Жилец", "Управляет домом")
+Person(tech, "Техник", "Обслуживает устройства")
+System_Ext(tg, "Телеграм-бот", "Внешний канал команд и уведомлений")
+System_Ext(devices, "Устройства умного дома", "Свет, замки, климат, датчики")
+
+Container_Boundary(api, "Backend API (Контроллер)") {
+  Component(commandController, "CommandController", "Kotlin, Spring MVC", "Принимает команды и оркестрирует сценарий")
+  Component(policyService, "PolicyService", "Kotlin", "Проверяет роли, права и эскалацию")
+  Component(deviceService, "DeviceService", "Kotlin", "Проверяет доступность и публикует команды")
+  Component(journalService, "JournalService", "Kotlin", "Публикует события журнала")
+  Component(notificationService, "NotificationService", "Kotlin", "Формирует уведомления")
+}
+
+Container(friday, "Голосовой модуль «Пятница»", "Python 3.12, FastAPI", "Распознаёт голос")
+ContainerQueue(mqtt, "Брокер MQTT", "Eclipse Mosquitto", "Команды устройствам")
+ContainerQueue(eventBus, "Очередь событий", "RabbitMQ", "Асинхронные события")
+Container(journalWorker, "Обработчик журнала", "Kotlin, Spring Boot", "Пишет события в БД")
+Container(notification, "Сервис уведомлений", "Kotlin, Spring Boot", "Доставляет уведомления")
+ContainerDb(db, "БД «Журнал»", "PostgreSQL 16", "События, команды, статусы")
+
+Rel(friday, commandController, "Передаёт распознанную команду", "HTTPS")
+Rel(tg, commandController, "Передаёт команду", "HTTPS")
+Rel(tech, commandController, "Запрашивает журнал и диагностику", "HTTPS")
+Rel(commandController, policyService, "Проверяет права", "in-process")
+Rel(commandController, deviceService, "Отправляет команду", "in-process")
+Rel(commandController, journalService, "Фиксирует событие", "in-process")
+Rel(commandController, notificationService, "Формирует уведомление", "in-process")
+Rel(policyService, db, "Читает роли и права", "JDBC")
+BiRel(deviceService, mqtt, "Команды и подтверждения", "MQTT")
+Rel(mqtt, devices, "Доставляет команду", "MQTT")
+Rel(journalService, eventBus, "Публикует событие", "AMQP")
+Rel(notificationService, eventBus, "Публикует запрос на уведомление", "AMQP")
+Rel(eventBus, journalWorker, "Доставляет событие журнала", "AMQP")
+Rel(journalWorker, db, "Пишет журнал", "JDBC")
+Rel(eventBus, notification, "Доставляет запрос", "AMQP")
+Rel(notification, tg, "Отправляет уведомление", "HTTPS")
+
+legend right
+  Трассировка до классов ПР1:
+  CommandController → Контроллер
+  PolicyService → ПолитикаДоступа
+  DeviceService → УправляемоеУстройство
+  JournalService → Журнал
+  NotificationService → Уведомление
+endlegend
+
+SHOW_LEGEND()
+@enduml

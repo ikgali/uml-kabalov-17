@@ -1,0 +1,39 @@
+@startuml
+!include <C4/C4_Container>
+!pragma layout smetana
+title Уровень 2 — Containers: ИС «Умный дом»
+
+Person(resident, "Жилец", "Управляет домом через мессенджер или голосом")
+Person(tech, "Техник", "Обслуживает устройства и смотрит журнал")
+
+System_Boundary(smartHome, "ИС «Умный дом»") {
+  Container(api, "Backend API (Контроллер)", "Kotlin 2.x, Spring Boot", "Команды, сценарии, права доступа, оркестрация")
+  Container(friday, "Голосовой модуль «Пятница»", "Python 3.12, FastAPI, ML-модели", "Распознаёт голос и передаёт команду в API")
+  ContainerQueue(mqtt, "Брокер сообщений MQTT", "Eclipse Mosquitto", "Команды устройствам и показания датчиков")
+  ContainerQueue(eventBus, "Очередь событий", "RabbitMQ", "Асинхронные события журнала и уведомлений")
+  Container(journalWorker, "Обработчик журнала", "Kotlin 2.x, Spring Boot", "Читает события из очереди и пишет их в БД")
+  Container(notification, "Сервис уведомлений", "Kotlin 2.x, Spring Boot", "Формирует и доставляет уведомления жильцу")
+  ContainerDb(db, "БД «Журнал»", "PostgreSQL 16", "События, команды, статусы сценариев и права")
+}
+
+System_Ext(tg, "Телеграм-бот", "Внешний канал команд и уведомлений")
+System_Ext(police, "Полиция", "Принимает аварийные сигналы")
+System_Ext(devices, "Устройства умного дома", "Свет, замки, климат, датчики")
+
+BiRel(resident, tg, "Команды и статусы", "через мессенджер")
+Rel(tg, api, "Передаёт команды", "HTTPS")
+Rel(tech, api, "Обслуживает устройства, смотрит журнал", "HTTPS")
+Rel(friday, api, "Передаёт распознанную команду", "HTTPS")
+Rel(api, db, "Читает права и статусы, пишет команды", "JDBC")
+BiRel(api, mqtt, "Команды и подтверждения", "MQTT")
+Rel(mqtt, devices, "Доставляет команды", "MQTT")
+Rel(devices, mqtt, "Публикует показания и подтверждения", "MQTT")
+Rel(api, eventBus, "Публикует события", "AMQP")
+Rel(eventBus, journalWorker, "Доставляет события журнала", "AMQP")
+Rel(journalWorker, db, "Пишет журнал", "JDBC")
+Rel(eventBus, notification, "Доставляет события для уведомлений", "AMQP")
+Rel(notification, tg, "Отправляет уведомления", "HTTPS")
+Rel(api, police, "Передаёт аварийный сигнал", "HTTPS")
+
+SHOW_LEGEND()
+@enduml

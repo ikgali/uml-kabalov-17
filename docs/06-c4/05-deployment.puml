@@ -1,0 +1,41 @@
+@startuml
+!include ../../_style.puml
+title Развёртывание ИС «Умный дом»
+
+node "Kubernetes-кластер" as k8s {
+  node "Pod: backend-api (x3)" as apiPod {
+    artifact "backend-api.jar" as apiJar
+  }
+  node "Pod: friday (x2)" as fridayPod {
+    artifact "friday:latest" as fridayArt
+  }
+  node "Pod: journal-worker" as workerPod {
+    artifact "journal-worker.jar" as workerJar
+  }
+  node "Pod: notification" as notifyPod {
+    artifact "notification-service.jar" as notifyJar
+  }
+}
+
+node "PostgreSQL 16" as pg {
+  database "journal_db" as journalDb
+}
+node "RabbitMQ" as rabbit {
+  queue "events" as eventsQ
+}
+node "Mosquitto" as mosquitto {
+  queue "mqtt" as mqttQ
+}
+node "Телеграм-бот" as tg
+node "Устройства умного дома" as dev
+
+apiJar --> journalDb : JDBC/5432
+apiJar --> eventsQ : AMQP/5672
+apiJar --> mqttQ : MQTT/1883
+mqttQ --> dev : MQTT
+eventsQ --> workerJar : AMQP
+workerJar --> journalDb : JDBC
+eventsQ --> notifyJar : AMQP
+notifyJar --> tg : HTTPS
+fridayArt --> apiJar : HTTPS
+@enduml
